@@ -81,7 +81,7 @@ import numpy as np
 
 # Load pre-trained model
 pretrained_model = tf.keras.applications.MobileNetV2(weights='imagenet', input_shape=(224, 224, 3))
-images = ['panda3.jpg', 'bookcase.jpg', 'corn.jpg', 'cowboyhat.jpg', 'dog.jpg', 'forklift.jpg', 'limo.jpg',
+images = ['panda.jpg', 'panda3.jpg', 'bookcase.jpg', 'corn.jpg', 'cowboyhat.jpg', 'dog.jpg', 'forklift.jpg', 'limo.jpg',
           'pajamas.jpg', 'rugbyball.jpg', 'shovel.jpg', 'submarine.jpg', 'tennisracket.jpg', 'vacuum.jpg',
           'waterbottle.jpg']
 last_perturb = 0
@@ -106,14 +106,13 @@ def pgd_attack_untargeted(image, epsilon, alpha, num_steps, original):
             loss = -original_class_prob
         gradient = tape.gradient(loss, adv_image)
         signed_grad = tf.sign(gradient)
-        adv_image = adv_image + alpha * signed_grad
-        perturbation = tf.clip_by_value(adv_image - image, -epsilon, epsilon)
-        adv_image = image + perturbation
+        perturbation = alpha * signed_grad
+        adv_image = tf.clip_by_value(adv_image + perturbation, image - epsilon, image + epsilon)
         adv_image = tf.clip_by_value(adv_image, -1, 1)
     return adv_image
 
 
-# Define the objective function
+#Define the objective function
 def objective_function(params):
     epsilon, alpha = params
     perturbation_sum = 0
@@ -178,7 +177,7 @@ result = gp_minimize(
     random_state=42
 )
 
-# Get the optimal parameters
+#Get the optimal parameters
 best_epsilon, best_alpha = result.x
 
 print("Optimal epsilon:", best_epsilon)
@@ -190,8 +189,8 @@ for i in range(len(images)):
     image = tf.keras.preprocessing.image.img_to_array(image)
     image = tf.keras.applications.mobilenet_v2.preprocess_input(image[tf.newaxis])
     # Parameters for PGD attack
-    epsilon = 0.1
-    alpha = 0.05
+    epsilon = 0.005
+    alpha = 0.005
     num_steps = 20
     origin_predict, origin_class = decode_predictions(pretrained_model.predict(image))
 
