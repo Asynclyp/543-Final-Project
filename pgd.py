@@ -163,6 +163,7 @@ def objective_function(params):
         combined_objective += 1000000
     return combined_objective  # We maximize the negative combined objective function
 
+
 # Define the search space for Bayesian optimization
 param_space = [
     Real(0.001, 0.01, name='epsilon'),
