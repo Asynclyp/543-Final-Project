@@ -95,7 +95,6 @@ def decode_predictions(prediction):
     predicted_class_index = np.argmax(prediction)
     return class_labels[str(predicted_class_index)], predicted_class_index
 
-
 def pgd_attack_untargeted(image, epsilon, alpha, num_steps, original):
     adv_image = tf.identity(image)
     for _ in range(num_steps):
