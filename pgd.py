@@ -149,16 +149,19 @@ def objective_function(params):
     # Adjust this weight to control the trade-off between misclassification and perturbation minimization
 
     # Calculate the combined objective function value
-    combined_objective = misclassification_rate - 0.1 * avg_perturbation
+    combined_objective = -100 * misclassification_rate + 5 * avg_perturbation
     print("avg_perturbation: ", avg_perturbation)
     print("misclassification_rate: ", misclassification_rate)
     print("current epsilon: ", epsilon)
     print("current alpha: ", alpha)
 
     # Return the combined objective function value
-    if -combined_objective >= 0:
-        return -1000000
-    return -combined_objective  # We maximize the negative combined objective function
+    #if -combined_objective >= 0:
+    #    return combined_objective
+    # punish bad misclassification rates
+    if misclassification_rate <= 0.7:
+        combined_objective += 1000000
+    return combined_objective  # We maximize the negative combined objective function
 
 
 # Define the search space for Bayesian optimization
@@ -187,7 +190,7 @@ for i in range(len(images)):
     image = tf.keras.preprocessing.image.img_to_array(image)
     image = tf.keras.applications.mobilenet_v2.preprocess_input(image[tf.newaxis])
     # Parameters for PGD attack
-    epsilon = 0.9
+    epsilon = 0.1
     alpha = 0.05
     num_steps = 20
     origin_predict, origin_class = decode_predictions(pretrained_model.predict(image))
