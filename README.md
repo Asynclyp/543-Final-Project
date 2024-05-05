@@ -12,3 +12,17 @@ If using Pycharm for the first time, click on the <No Interpreter> on the bottom
 Packages: TensorFlow, Matplotlib, Numpy, Scikit-Optimize
 
 FGSM.py, PGD_BayesianOpt.py, and PGD_HillClimbing.py each corresponds to the implementation of FGSM, PDG with Bayesian Optimization, and PDG with Hill Climbing Optimization. Running each python program would generates the results detailed in our report.
+
+For example, type  
+```plaintext
+python FGSM.py
+```
+to obtain the results of our FGSM implementation.
+Similarly, type 
+```plaintext
+python PGD_BayesianOpt.py
+```
+```plaintext
+python PGD_HillClimbing.py
+```
+to see those results as well.
