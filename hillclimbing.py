@@ -7,8 +7,8 @@ import random
 pretrained_model = tf.keras.applications.MobileNetV2(weights='imagenet', input_shape=(224, 224, 3))
 images = ['panda.jpg', 'panda3.jpg', 'bookcase.jpg', 'corn.jpg', 'cowboyhat.jpg', 'dog.jpg', 'forklift.jpg', 'limo.jpg',
           'pajamas.jpg', 'rugbyball.jpg', 'shovel.jpg', 'submarine.jpg', 'tennisracket.jpg', 'vacuum.jpg',
-          'waterbottle.jpg']
-def pgd_attack_untargeted(image, epsilon, alpha, num_steps, original):
+          'waterbottle.jpg', 'ambulance.jpg']
+def pgdAttack(image, epsilon, alpha, num_steps, original):
     adv_image = tf.identity(image)
 
     for _ in range(num_steps):
@@ -27,7 +27,7 @@ def pgd_attack_untargeted(image, epsilon, alpha, num_steps, original):
 
     return adv_image
 
-def decode_predictions(prediction):
+def decodePredictions(prediction):
     label_map = tf.keras.utils.get_file('imagenet_class_index.json',
                                         'https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json')
     with open(label_map) as f:
@@ -36,7 +36,7 @@ def decode_predictions(prediction):
     return class_labels[str(predicted_class_index)], predicted_class_index
 
 
-def objective_function(params):
+def objectiveFunction(params):
     epsilon, alpha = params
     perturbation_sum = 0
     misclassification_count = 0
@@ -47,10 +47,10 @@ def objective_function(params):
         image = tf.keras.preprocessing.image.img_to_array(image)
         image = tf.keras.applications.mobilenet_v2.preprocess_input(image[tf.newaxis])
 
-        origin_predict, origin_class = decode_predictions(pretrained_model.predict(image))
+        origin_predict, origin_class = decodePredictions(pretrained_model.predict(image))
 
         # Generate adversarial image
-        adversarial_image = pgd_attack_untargeted(image, epsilon, alpha, 20, origin_class)
+        adversarial_image = pgdAttack(image, epsilon, alpha, 20, origin_class)
 
         # Get the predicted class for the adversarial image
         adversarial_prediction = pretrained_model.predict(adversarial_image)
@@ -78,13 +78,10 @@ def objective_function(params):
     print("current alpha: ", alpha)
 
     # Return the combined objective function value
-    #if -combined_objective >= 0:
-    #    return combined_objective
     # punish bad misclassification rates
     if misclassification_rate <= 0.7:
         combined_objective += 1000000
     return combined_objective  # We maximize the negative combined objective function
-
 
 # Hill Climbing Parameters
 step_size_alpha = 0.005
@@ -99,17 +96,29 @@ alpha = random.uniform(0.001, 0.05)
 best_alpha = None
 best_epsilon = None
 best_score = float('inf')
-# Perform hill climbing
 
+# Perform hill climbing
 for _ in range(num_steps_per_update):
 
     new_alpha = alpha + np.random.uniform(-step_size_alpha, step_size_alpha)
     new_epsilon = epsilon + np.random.uniform(-step_size_epsilon, step_size_epsilon)
+    # bounds checking
+    if new_alpha < 0.001:
+        new_alpha = 0.001
+    if new_alpha > 0.05:
+        new_alpha = 0.05
+    if new_epsilon < 0.001:
+        new_epsilon = 0.001
+    if new_epsilon > 0.01:
+        new_epsilon = 0.01
 
-    # Evaluate the PGD attack with the perturbed alpha and epsilon
-    score = objective_function((new_epsilon, new_alpha))
 
-    # If the new parameters are better, accept the new parameters
+
+
+    # obtain score of PGD attack with the perturbed alpha and epsilon
+    score = objectiveFunction((new_epsilon, new_alpha))
+
+    # update parameters if better than before
     if score < best_score:
         best_alpha = new_alpha
         best_epsilon = new_epsilon
