@@ -38,7 +38,7 @@ def decode_predictions(prediction):
     predicted_class_index = np.argmax(prediction)
     return class_labels[str(predicted_class_index)], predicted_class_index
 
-def create_adversarial_pattern(input_image, input_label):
+def compute_perturbation(input_image, input_label):
     """Create adversarial perturbation based on model predictions."""
     with tf.GradientTape() as tape:
         tape.watch(input_image)
@@ -78,7 +78,7 @@ def main():
         label = tf.one_hot(label_index, image_probs.shape[-1])
         label = tf.reshape(label, (1, image_probs.shape[-1]))
 
-        perturbations = create_adversarial_pattern(image, label)
+        perturbations = compute_perturbation(image, label)
         plt.imshow(perturbations[0] * 0.5 + 0.5);
         epsilons = [0, 0.01, 0.1, 0.15]
         descriptions = ['Input'] + [f'Epsilon = {eps:.3f}' for eps in epsilons[1:]]
