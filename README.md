@@ -4,7 +4,9 @@ In this project, we implement Fast Gradient Sign Method and Projected Gradient D
 
 # How To Use
 Suggested IDE: Pycharm
+
 Python version 3.10+
+
 Packages: TensorFlow, Matplotlib, Numpy, Scikit-Optimize
 
 There three python files each corresponds to the implementation of FGSM, PDG with Bayesian Optimization, and PDG with Hill Climbing Optimization. Running each python program would generates the results detailed in our report.
