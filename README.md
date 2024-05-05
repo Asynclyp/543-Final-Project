@@ -7,6 +7,8 @@ Suggested IDE: Pycharm
 
 Python version 3.10+
 
+If using Pycharm for the first time, click on the <No Interpreter> on the bottom left corner -> Add New Interpreter -> Add Local Interpreter -> System Interpreter -> select installed Python. 
+
 Packages: TensorFlow, Matplotlib, Numpy, Scikit-Optimize
 
 FGSM.py, PGD_BayesianOpt.py, and PGD_HillClimbing.py each corresponds to the implementation of FGSM, PDG with Bayesian Optimization, and PDG with Hill Climbing Optimization. Running each python program would generates the results detailed in our report.
