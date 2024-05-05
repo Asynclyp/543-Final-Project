@@ -6,17 +6,6 @@ import time
 import json
 import numpy as np
 
-# Configure plotting aesthetics
-plt.rcParams['figure.figsize'] = (8, 8)
-plt.rcParams['axes.grid'] = False
-
-# Initialize the pre-trained MobileNetV2 model
-pretrained_model = MobileNetV2(include_top=True, weights='imagenet')
-pretrained_model.trainable = False
-
-# Define loss object for the adversarial pattern generation
-loss_object = tf.keras.losses.CategoricalCrossentropy()
-
 def preprocess_image(image_path):
     """Load and preprocess an image."""
     image_raw = tf.io.read_file(image_path)
@@ -59,35 +48,44 @@ def display_image(image, description):
                                                      label, confidence * 100))
     plt.show()
 
-def main():
-    images = [
-        'panda.jpg', 'bookcase.jpg', 'corn.jpg', 'cowboyhat.jpg', 'dog.jpg',
-        'forklift.jpg', 'limo.jpg', 'pajamas.jpg', 'rugbyball.jpg', 'shovel.jpg',
-        'submarine.jpg', 'tennisracket.jpg', 'vacuum.jpg', 'waterbottle.jpg'
-    ]
 
-    for image_path in images:
-        image = preprocess_image(image_path)
-        image_probs = pretrained_model.predict(image)
-        image_class, class_confidence = get_imagenet_label(image_probs)
-        display_image(image, f'{image_class} : {class_confidence * 100:.2f}% Confidence')
 
-        # Prepare label for adversarial pattern generation
+# Configure plotting aesthetics
+plt.rcParams['figure.figsize'] = (8, 8)
+plt.rcParams['axes.grid'] = False
 
-        label_index = np.argmax(image_probs)
-        label = tf.one_hot(label_index, image_probs.shape[-1])
-        label = tf.reshape(label, (1, image_probs.shape[-1]))
+# Initialize the pre-trained MobileNetV2 model
+pretrained_model = MobileNetV2(include_top=True, weights='imagenet')
+pretrained_model.trainable = False
 
-        perturbations = compute_perturbation(image, label)
-        plt.imshow(perturbations[0] * 0.5 + 0.5);
-        epsilons = [0, 0.01, 0.1, 0.15]
-        descriptions = ['Input'] + [f'Epsilon = {eps:.3f}' for eps in epsilons[1:]]
+# Define loss object for the adversarial pattern generation
+loss_object = tf.keras.losses.CategoricalCrossentropy()
 
-        for eps, desc in zip(epsilons, descriptions):
-            adv_x = image + eps * perturbations
-            adv_x = tf.clip_by_value(adv_x, -1, 1)
-            display_image(adv_x, desc)
-            time.sleep(3)
+images = [
+    'panda.jpg', 'bookcase.jpg', 'corn.jpg', 'cowboyhat.jpg', 'dog.jpg',
+    'forklift.jpg', 'limo.jpg', 'pajamas.jpg', 'rugbyball.jpg', 'shovel.jpg',
+    'submarine.jpg', 'tennisracket.jpg', 'vacuum.jpg', 'waterbottle.jpg'
+]
 
-if __name__ == '__main__':
-    main()
+for image_path in images:
+    image = preprocess_image(image_path)
+    image_probs = pretrained_model.predict(image)
+    image_class, class_confidence = get_imagenet_label(image_probs)
+    display_image(image, f'{image_class} : {class_confidence * 100:.2f}% Confidence')
+
+    # Prepare label for adversarial pattern generation
+
+    label_index = np.argmax(image_probs)
+    label = tf.one_hot(label_index, image_probs.shape[-1])
+    label = tf.reshape(label, (1, image_probs.shape[-1]))
+
+    perturbations = compute_perturbation(image, label)
+    plt.imshow(perturbations[0] * 0.5 + 0.5);
+    epsilons = [0, 0.01, 0.1, 0.15]
+    descriptions = ['Input'] + [f'Epsilon = {eps:.3f}' for eps in epsilons[1:]]
+
+    for eps, desc in zip(epsilons, descriptions):
+        adv_x = image + eps * perturbations
+        adv_x = tf.clip_by_value(adv_x, -1, 1)
+        display_image(adv_x, desc)
+        time.sleep(3)
