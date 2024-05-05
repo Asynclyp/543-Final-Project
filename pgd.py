@@ -81,7 +81,7 @@ import numpy as np
 
 # Load pre-trained model
 pretrained_model = tf.keras.applications.MobileNetV2(weights='imagenet', input_shape=(224, 224, 3))
-images = ['panda3.jpg', 'bookcase.jpg', 'corn.jpg', 'cowboyhat.jpg', 'dog.jpg', 'forklift.jpg', 'limo.jpg',
+images = ['panda.jpg', 'panda3.jpg', 'bookcase.jpg', 'corn.jpg', 'cowboyhat.jpg', 'dog.jpg', 'forklift.jpg', 'limo.jpg',
           'pajamas.jpg', 'rugbyball.jpg', 'shovel.jpg', 'submarine.jpg', 'tennisracket.jpg', 'vacuum.jpg',
           'waterbottle.jpg']
 last_perturb = 0
@@ -95,7 +95,6 @@ def decode_predictions(prediction):
     predicted_class_index = np.argmax(prediction)
     return class_labels[str(predicted_class_index)], predicted_class_index
 
-
 def pgd_attack_untargeted(image, epsilon, alpha, num_steps, original):
     adv_image = tf.identity(image)
     for _ in range(num_steps):
@@ -106,14 +105,13 @@ def pgd_attack_untargeted(image, epsilon, alpha, num_steps, original):
             loss = -original_class_prob
         gradient = tape.gradient(loss, adv_image)
         signed_grad = tf.sign(gradient)
-        adv_image = adv_image + alpha * signed_grad
-        perturbation = tf.clip_by_value(adv_image - image, -epsilon, epsilon)
-        adv_image = image + perturbation
+        perturbation = alpha * signed_grad
+        adv_image = tf.clip_by_value(adv_image + perturbation, image - epsilon, image + epsilon)
         adv_image = tf.clip_by_value(adv_image, -1, 1)
     return adv_image
 
 
-# Define the objective function
+#Define the objective function
 def objective_function(params):
     epsilon, alpha = params
     perturbation_sum = 0
@@ -149,16 +147,19 @@ def objective_function(params):
     # Adjust this weight to control the trade-off between misclassification and perturbation minimization
 
     # Calculate the combined objective function value
-    combined_objective = misclassification_rate - 0.1 * avg_perturbation
+    combined_objective = -100 * misclassification_rate + 5 * avg_perturbation
     print("avg_perturbation: ", avg_perturbation)
     print("misclassification_rate: ", misclassification_rate)
     print("current epsilon: ", epsilon)
     print("current alpha: ", alpha)
 
     # Return the combined objective function value
-    if -combined_objective >= 0:
-        return -1000000
-    return -combined_objective  # We maximize the negative combined objective function
+    #if -combined_objective >= 0:
+    #    return combined_objective
+    # punish bad misclassification rates
+    if misclassification_rate <= 0.7:
+        combined_objective += 1000000
+    return combined_objective  # We maximize the negative combined objective function
 
 
 # Define the search space for Bayesian optimization
@@ -175,7 +176,7 @@ result = gp_minimize(
     random_state=42
 )
 
-# Get the optimal parameters
+#Get the optimal parameters
 best_epsilon, best_alpha = result.x
 
 print("Optimal epsilon:", best_epsilon)
@@ -187,8 +188,8 @@ for i in range(len(images)):
     image = tf.keras.preprocessing.image.img_to_array(image)
     image = tf.keras.applications.mobilenet_v2.preprocess_input(image[tf.newaxis])
     # Parameters for PGD attack
-    epsilon = 0.9
-    alpha = 0.05
+    epsilon = 0.005
+    alpha = 0.005
     num_steps = 20
     origin_predict, origin_class = decode_predictions(pretrained_model.predict(image))
 
